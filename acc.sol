@@ -65,7 +65,7 @@ contract AccessControlMethod {
     function stringToBytes32(string _str) public constant returns (bytes32) { //type conversion string to bytes32
         bytes memory tempBytes = bytes(_str);
         bytes32 convertedBytes;
-        if (0 == tempBytes.lenght) {
+        if (0 == tempBytes.length) {
             return 0x0;
         }
         /*line assembly is way to write thw assembly language in solidity.
@@ -85,7 +85,7 @@ contract AccessControlMethod {
     }
 
     function policyAdd(string _resource, string _action,
-        string _permission, uint _minInterval, uint _thershold) public {
+        string _permission, uint _minInterval, uint _threshold) public {
         bytes32 resource = stringToBytes32(_resource);
         bytes32 action = stringToBytes32(_action);
         if (msg.sender == owner) {
@@ -93,7 +93,7 @@ contract AccessControlMethod {
             else {
                 policies[resource][action].permission = _permission;
                 policies[resource][action].minInterval = _minInterval;
-                policies[resource][action].thershold = _thershold;
+                policies[resource][action].threshold = _threshold;
                 policies[resource][action].toLR = 0;
                 policies[resource][action].noFR = 0;
                 policies[resource][action].isValued = true;
@@ -107,7 +107,7 @@ contract AccessControlMethod {
 
     function getPolicy(string _resource, string _action) public constant returns (string _permission,
         uint _minInterval,
-        uint _thershold, uint _toLR,
+        uint _threshold, uint _toLR,
         uint _noFR,
         bool _res,
         uint8 _errcode) {
@@ -173,37 +173,37 @@ contract AccessControlMethod {
         if (msg.sender == subject) {
             bytes32 resource = stringToBytes32(_resource);
             bytes32 action = stringToBytes32(_action);
-            if (behaviors[resource].TimeofUnblock >= _time) {//still blocked state
+            if (behaviors[resource].timeofUnblock >= _time) {//still blocked state
                 errcode = 1; //"Requests are blocked!"
             }   else {//unblocked state
-                if (behaviors[resource].TimeofUnblock > 0) {
-                    behaviors[resource].TimeofUnblock = 0;
-                    policies[resource][action].NoFR = 0;
-                    policies[resource][action].ToLR = 0;
+                if (behaviors[resource].timeofUnblock > 0) {
+                    behaviors[resource].timeofUnblock = 0;
+                    policies[resource][action].noFR = 0;
+                    policies[resource][action].toLR = 0;
                 }//policy check
-                if (keccak256("allow") == keccak256(policies[resource][action].permission)) {
+                if (keccak256("allow") == abi.encodePacked(policies[resource][action].permission)) {
                     policycheck = true;
                 } else {
                     policycheck = false;
                 }//behavior check
-                if (_time - policies[resource][action].ToLR <= policies[resource][action].minInterval) {
-                    policies[resource][action].NoFR++;
-                    if (policies[resource][action].NoFR >= policies[resource][action].threshold) {
+                if (_time - policies[resource][action].toLR <= policies[resource][action].minInterval) {
+                    policies[resource][action].noFR++;
+                    if (policies[resource][action].noFR >= policies[resource][action].threshold) {
                         penalty = jc.misbehaviorJudge(subject, object, _resource, _action,
                         "Too frequent access!", _time);
                         behaviorcheck = false;
-                        behaviors[resource].TimeofUnblock = _time + penalty * 1 minutes;
-                        behaviors[resource].mbs.push(Misbehavior(_resource, _action,
+                        behaviors[resource].timeofUnblock = _time + penalty * 1 minutes;
+                        behaviors[resource].mbs.push(Misbehaviour(_resource, _action,
                             "Too frequent access!", _time, penalty));//problem occurs when using array
                     }
                 }  else {
-                    policies[resource][action].NoFR = 0;
+                    policies[resource][action].noFR = 0;
                 }
                 if (!policycheck && behaviorcheck) errcode = 2; //"Static Check failed!"
                 if (policycheck && !behaviorcheck) errcode = 3; //"Misbehavior detected!"
                 if (!policycheck && !behaviorcheck) errcode = 4; //"Static check failed! & Misbehavior detected!";
             }
-            policies[resource][action].ToLR = _time;
+            policies[resource][action].toLR = _time;
         } else {
             errcode = 5; //"Wrong object or subject detected!";
         }
@@ -215,7 +215,7 @@ contract AccessControlMethod {
         if (3 == errcode) ReturnAccessResult(msg.sender, "Misbehavior detected!", false, _time, penalty);
         if (4 == errcode) ReturnAccessResult(msg.sender, "Static check failed! & Misbehavior detected!",
         false, _time, penalty);
-        if (5 == errcode) ReturnAccessResult(msg.sender, "Wrong object or subject specified!", false, _time, enalty);
+        if (5 == errcode) ReturnAccessResult(msg.sender, "Wrong object or subject specified!", false, _time, penalty);
     }
 
     function getTimeofUnblock(string _resource) public constant returns (uint _penalty, uint _timeOfUnblock) {
