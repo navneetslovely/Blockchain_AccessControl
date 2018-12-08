@@ -1,64 +1,78 @@
-pragma solidity ^0.4.25;
+pragma solidity 0.4.25;
 
 
 contract AccessControlMethod {
-    //
-    //
-    address public owner;
-    address public subject;
-    address public object;
+    //contract is created
+    // address holds 20 bytes value
+    address public owner;     // initialize the owner with address datatype--> public. can be access from anywhere.
+    address public subject;   //  initialize the subject with address datatype--> public. can be access from anywhere.
+    address public object;    // initialize the object with address datatype ---> public .access from anywhere.
     Judge public jc;
 
-    event ReturnAccessResult (
-        address indexed _from,
-        string _errmsg,
-        bool _result,
-        uint _time,
-        uint _penalty
+    event ReturnAccessResult (       // contain the result of the access Control,
+      // runs only when ethier access is granted or revoked
+        address indexed _from,       // retrieve the address(_from)
+        string _errmsg,              // string erorr msg
+        bool _result,                // boolean value y/n(yes / no)
+        uint _time,                  // time stamp
+        uint _penalty                // how much penalty
     );
 
+        //(struct) Defineing the structure of Misbehavior. or we can say that defining the body of the Misbehavior
     struct Misbehaviour {
-        string res;
-        string action;
-        string misbehavior;
-        uint time;
-        uint penalty;
+        string res;                 // resource on which the misbehavior is conducted
+        string action;              //action (e.g., "read", "write", "execute") of the misbehavior
+        string misbehavior;         //misbehavior
+        uint time;                  //time of the misbehavior occured
+        uint penalty;               //penalty opposed to the subject (number of minutes blocked)
     }
 
-    struct BehaviorItem {
-        Misbehaviour[] mbs;
-        uint timeofUnblock;
-
+//defining body of the BehaviorItem
+    struct BehaviorItem {           //for one resource
+        Misbehaviour[] mbs;         //misbehavior list of the subject on a particular resource
+        uint timeofUnblock;         //time when the resource is unblocked (0 if unblocked; otherwise, blocked)
     }
 
-    struct PolicyItem {
-        bool isValued;
-        string permission;
-        uint minInterval;
-        uint toLR;
-        uint noFR;
-        uint threshold;
-        bool result;
-        uint8 err;
+//body of PolicyItem
+    struct PolicyItem {             //for one (resource, action) pair;
+        bool isValued;              //for duplicate Check
+        string permission;          //permission: "allow" or "deny"
+        uint minInterval;           //minimum allowable interval (in seconds) between two successive requests
+        uint toLR;                  //Time of Last Request
+        uint noFR;                  //Number of frequent  Requests in a short period of tim
+        uint threshold;             //threshold on NoFR, above which a misbehavior is suspected
+        bool result;                //last access result
+        uint8 err;                  //last err code
     }
 
+        /* mapping is the key value pair data structure.which can be virtually initialized
+        such a way that every key is pointed (mapped) toword the value */
     mapping (bytes32 => mapping(bytes32 => PolicyItem)) policies;
+    //mapping (resource, action) =>PolicyCriteria for policy check
     mapping (bytes32 => BehaviorItem) behaviors;
+    //mapping resource => BehaviorCriteria for behavior check
 
-    constructor (address _subject) public {
-        owner = msg.sender;
-        object = msg.sender;
-        subject = _subject;
+/*constructor runs only once when the contract is created */
+    constructor(address _subject) public {          // user define constructor
+        owner = msg.sender;// getting the address of owner(who first run deploy contract on blockchain)
+        object = msg.sender;// getting the address of the object
+        subject = _subject; // defining the public subject to the local subject(_subject)
     }
 
-    function stringToBytes32(string _str) public contant returns (bytes32) {
+            /*convert string into bytes32. string uses large amount of gas and bytes32 use less amount gas.
+            bytes32 is fixed-size byte-array. and its fits in a single word.
+            string is dynamic sized type.*/
+    function stringToBytes32(string _str) public constant returns (bytes32) { //type conversion string to bytes32
         bytes memory tempBytes = bytes(_str);
         bytes32 convertedBytes;
         if (0 == tempBytes.lenght) {
             return 0x0;
         }
+        /*line assembly is way to write thw assembly language in solidity.
+        for more on this :https://ethereum.stackexchange.com/question/9142/   */
         assembly {
             convertedBytes := mload(add(_str, 32))
+            // mload is assembly language command to load the instruction into machine.
         }
         return convertedBytes;
     }
