@@ -181,7 +181,7 @@ contract AccessControlMethod {
                     policies[resource][action].noFR = 0;
                     policies[resource][action].toLR = 0;
                 }//policy check
-                if (keccak256("allow") == abi.encodePacked(policies[resource][action].permission)) {
+                if (keccak256("allow") == keccak256(policies[resource][action].permission)) {
                     policycheck = true;
                 } else {
                     policycheck = false;
@@ -220,8 +220,8 @@ contract AccessControlMethod {
 
     function getTimeofUnblock(string _resource) public constant returns (uint _penalty, uint _timeOfUnblock) {
         bytes32 resource= stringToBytes32(_resource);
-        _timeOfUnblock = behaviors[resource].TimeofUnblock;
-        uint li = behaviors[resource].mbs.lengthl;
+        _timeOfUnblock = behaviors[resource].timeofUnblock;
+        uint li = behaviors[resource].mbs.length;
         _penalty = behaviors[resource].mbs[li - 1].penalty;
     }
 
