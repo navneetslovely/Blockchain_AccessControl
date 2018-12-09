@@ -78,17 +78,17 @@ contract AccessControlMethod {
     }
 
     function setJC(address _jc) public {
-        if (owner == msg.sender) {
-            jc = Judge(_jc);
-        }  else
-            revert();
+        if (owner == msg.sender) {// checking the valid owner. if its valid owner then it will run this.
+            jc = Judge(_jc);// inoking the local variable (_jc)
+        }  else // otherwise it will ..
+            revert();// it flags the errors....
     }
 
     function policyAdd(string _resource, string _action,
         string _permission, uint _minInterval, uint _threshold) public {
-        bytes32 resource = stringToBytes32(_resource);
-        bytes32 action = stringToBytes32(_action);
-        if (msg.sender == owner) {
+        bytes32 resource = stringToBytes32(_resource);// converting the _resource (string) to bytes32
+        bytes32 action = stringToBytes32(_action);// converting the _action (string) to bytes32
+        if (msg.sender == owner) {//checking valid owner or not
             if (policies[resource][action].isValued) revert();
             else {
                 policies[resource][action].permission = _permission;
@@ -221,7 +221,8 @@ contract AccessControlMethod {
     function getTimeofUnblock(string _resource) public constant returns (uint _penalty, uint _timeOfUnblock) {
         bytes32 resource= stringToBytes32(_resource);
         _timeOfUnblock = behaviors[resource].timeofUnblock;
-        uint li = behaviors[resource].mbs.length;
+        uint li = behaviors[resource].mbs.length
+        ;
         _penalty = behaviors[resource].mbs[li - 1].penalty;
     }
 
