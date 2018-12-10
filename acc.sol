@@ -10,7 +10,7 @@ contract AccessControlMethod {
     Judge public jc;
 
     event ReturnAccessResult (       // contain the result of the access Control,
-      // runs only when ethier access is granted or revoked
+      // runs only when ethier access is granted or revoked. and defineing how ReturnAccessResult look like.
         address indexed _from,       // retrieve the address(_from)
         string _errmsg,              // string erorr msg
         bool _result,                // boolean value y/n(yes / no)
@@ -46,10 +46,20 @@ contract AccessControlMethod {
     }
 
         /* mapping is the key value pair data structure.which can be virtually initialized
-        such a way that every key is pointed (mapped) toword the value */
-    mapping (bytes32 => mapping(bytes32 => PolicyItem)) policies;
-    //mapping (resource, action) =>PolicyCriteria for policy check
-    mapping (bytes32 => BehaviorItem) behaviors;
+        such a way that every key is pointed (mapped) toword the value. its also used for creating mulitiple items
+        Here in this is used for adding mulitiple policies
+        For Example: i define the student which have its name ,age and its mental condition.
+         struct student{
+                string name;
+                uint age;
+                string mentalCondition;
+     } 
+     but in my class there is 30 students. we want students data of whole class. in solidity
+     we use mapping for getting this data of students. 
+       */
+    mapping (bytes32 => mapping(bytes32 => PolicyItem)) public  policies; // for adding new policies
+    //mapping (resource, action) =>PolicyCriteria for policy check.
+    mapping (bytes32 => BehaviorItem) public behaviors; // for adding new behavior
     //mapping resource => BehaviorCriteria for behavior check
 
 /*constructor runs only once when the contract is created */
@@ -77,6 +87,7 @@ contract AccessControlMethod {
         return convertedBytes;
     }
 
+/* instanse of the JC (judge contract).its nessary for acc to have a instanse of JC to run the JC.*/
     function setJC(address _jc) public {
         if (owner == msg.sender) {// checking the valid owner. if its valid owner then it will run this.
             jc = Judge(_jc);// inoking the local variable (_jc)
@@ -84,12 +95,16 @@ contract AccessControlMethod {
             revert();// it flags the errors....
     }
 
+/*it adds the information of new access Control policy into the policylist.
+its a ABI(application binary interfaces) 
+*/
     function policyAdd(string _resource, string _action,
         string _permission, uint _minInterval, uint _threshold) public {
         bytes32 resource = stringToBytes32(_resource);// converting the _resource (string) to bytes32
         bytes32 action = stringToBytes32(_action);// converting the _action (string) to bytes32
-        if (msg.sender == owner) {//checking valid owner or not
-            if (policies[resource][action].isValued) revert();
+        if (msg.sender == owner) { //checking valid owner or not
+            if (policies[resource][action].isValued) revert(); /* duplicated key i.e if policy already existed,
+            then it will not add to the policylist */
             else {
                 policies[resource][action].permission = _permission;
                 policies[resource][action].minInterval = _minInterval;
@@ -105,7 +120,9 @@ contract AccessControlMethod {
 
     }
 
-    function getPolicy(string _resource, string _action) public constant returns (string _permission,
+/*  this function have list of all the access control policy
+*/
+    function getPolicy(string _resource, string _action) public view returns (string _permission,
         uint _minInterval,
         uint _threshold, uint _toLR,
         uint _noFR,
@@ -127,6 +144,7 @@ contract AccessControlMethod {
     }
 
     function policyUpdate(string _resource, string _action, string _newPermission) public {
+//function updates the existing policies by get collecting the information of the policiy which need to be updated 
         bytes32 resource = stringToBytes32(_resource);
         bytes32 action = stringToBytes32(_action);
         if (policies[resource][action].isValued) {
@@ -165,6 +183,9 @@ contract AccessControlMethod {
             revert();
     }
 
+/* accessControl recives all the information for access control and result access result and penalty.
+it impliments static and dynamic validation.
+this function will act as main oprator of the Access control machenism in the contract */
     function accessControl(string _resource, string _action, uint _time) public {
         bool policycheck = false;
         bool behaviorcheck = true;
@@ -215,7 +236,8 @@ contract AccessControlMethod {
         if (3 == errcode) ReturnAccessResult(msg.sender, "Misbehavior detected!", false, _time, penalty);
         if (4 == errcode) ReturnAccessResult(msg.sender, "Static check failed! & Misbehavior detected!",
         false, _time, penalty);
-        if (5 == errcode) ReturnAccessResult(msg.sender, "Wrong object or subject specified!", false, _time, penalty);
+        if (5 == errcode) ReturnAccessResult(msg.sender, "Wrong object or subject specified!",
+        false, _time, penalty);
     }
 
     function getTimeofUnblock(string _resource) public constant returns (uint _penalty, uint _timeOfUnblock) {
@@ -227,6 +249,7 @@ contract AccessControlMethod {
     }
 
     function deleteACC() public {
+    // executed for selfdestruct opration on contract to remove the code and strode of acc from blockchain.
         if (msg.sender == owner) {
             selfdestruct(this);
         }
@@ -234,9 +257,11 @@ contract AccessControlMethod {
 }
 
 
+/* here we are caling the JUDGE CONTRACT in acc. 
+this will connect the acc with jc.it will run whens setJC will be called.*/
 contract Judge {
     function misbehaviorJudge(address _subject,
         address _object,
         string _res, string _action,
         string misbehavior, uint _time) public returns (uint );
-}
+} 

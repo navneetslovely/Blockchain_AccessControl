@@ -14,7 +14,7 @@ contract Register {
     
     mapping (bytes32=> Method) public lookupTable;
   
-    function stringToBytes32(string _str) public view returns (bytes32) {
+    function stringToBytes32(string _str) public pure returns (bytes32) {
         bytes memory tempBytes = bytes(_str);
         bytes32 convertedBytes;
         if (0 == tempBytes.length) {
