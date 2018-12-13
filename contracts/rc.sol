@@ -4,16 +4,21 @@ pragma solidity 0.4.25;
 contract Register {
   
     struct Method {
-        string scName;
-        address subject;
-        address object;
-        address creator;
-        address scAddress;
-        bytes abi;
+        string scName;      //contract name
+        address subject;    /* the subject of the corresponding subject-object pair of the ACC; for the JC,
+                            this filed is left blank */
+        address object;     /*the subject of the corresponding subject-object pair of the ACC; for the JC,
+                            this filed is left blank;*/
+        address creator;    //the address of the contract;
+        address scAddress;  //the address of the contract;
+        bytes abi;          //the Abi’s provided by the contract.
     }
     
+    /*As solidity cannot allow dynamically-sized value as the Key, we use the fixed-szie byte32 type as the
+    keytype*/
     mapping (bytes32=> Method) public lookupTable;
   
+    /*convert strings to byte32*/
     function stringToBytes32(string _str) public pure returns (bytes32) {
         bytes memory tempBytes = bytes(_str);
         bytes32 convertedBytes;
@@ -25,9 +30,11 @@ contract Register {
         }
         return convertedBytes;
     }
-    
+
+        /*register an access control contract (ACC)*/
     function methodRegister(string _methodName, string _scname, address _subject, 
         address _object, address _creator, address _scAddress, bytes _abi) public {
+            //no duplicate check
         bytes32 newKey = stringToBytes32(_methodName);
         lookupTable[newKey].scName = _scname;
         lookupTable[newKey].subject = _subject;
@@ -37,6 +44,8 @@ contract Register {
         lookupTable[newKey].abi = _abi; 
     }
     
+    /*update the ACC information (i.e., scname, scAddress, abi) of an exisiting method specified by the
+_methodName*/
     function methodScNameUpdate(string _methodName, string _scName) public {
         bytes32 key = stringToBytes32(_methodName);
         lookupTable[key].scName = _scName;
@@ -52,6 +61,8 @@ contract Register {
         lookupTable[key].abi = _abi;
     }
     
+    /*update the name (_oldname) of an exisiting method 
+    with a new name (_newname) */
     function methodNameUpdate(string _oldName, string _newName) public {
         bytes32 oldKey = stringToBytes32(_oldName);
         bytes32 newKey = stringToBytes32(_newName);
